@@ -47,30 +47,25 @@ FusionEKF::FusionEKF() {
   ekf_.x_ = VectorXd(4);
   
   // state covariance matrix P
+  cout << "Initializing state covariance matrix P in constructor... " << endl;
   ekf_.P_ = MatrixXd(4, 4);
+  ekf_.P_ << 1, 0, 0, 0,
+             0, 1, 0, 0,
+             0, 0, 1000, 0,
+             0, 0, 0, 1000;
+  cout << "Initializing Done!" << endl;
   
   // initial state transition matrix F_
+  cout << "Initializing state transition matrix F in constructor..." << endl;
   ekf_.F_ = MatrixXd (4, 4);
   ekf_.F_ << 1, 0, 1, 0,
              0, 1, 0, 1,
-             0, 0, 1, 0;
+             0, 0, 1, 0,
+             0, 0, 0, 1;
+  cout << "Initializing Done!" << endl;
   
   // process noise covariance matrix Q
   ekf_.Q_ = MatrixXd (2, 4);
-  /**
-  ekf_.Q_ << dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
-             0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
-             dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
-             0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
-  */
-  
-  // set the acceleration noise components (process noise)
-  // noise_ax = 9;
-  // noise_ay = 9;
-  
-  // set the measurement noise components
-  //px_noise = 
-  //py_noise = 
   
 }
 
@@ -95,51 +90,40 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
      */
     
     // Initialize the state ekf_.x_ with the first measurement (initial location and zero velocity)
-    cout << "EKF Initialization: " << endl;
+    cout << "EKF Initialization..." << endl;
     ekf_.x_ = VectorXd(4);
-    ekf_.x_ << measurement_pack.raw_measurements_[0], measurement_pack.raw_measurements_[1], 0, 0; // Fits for lidar. No change for radar (polar to cartesian) needed because first line in data file is Lidar measurement?
-    
-    // state covariance matrix P
-    ekf_.P_ = MatrixXd(4, 4);
-    ekf_.P_ << 1, 0, 0, 0,
-               0, 1, 0, 0,
-               0, 0, 1000, 0,
-               0, 0, 0, 1000;
+    ekf_.x_ << measurement_pack.raw_measurements_(0), measurement_pack.raw_measurements_(1), 0, 0;
     
     //Sensorfusion
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       // DONE: Convert radar from polar to cartesian coordinates and initialize state.
-      float rho = measurement_pack.raw_measurements_[0];
-      float phi = measurement_pack.raw_measurements_[1];
-      float px = cos(phi)*rho;
-      float py = sin(phi)*rho;
-      ekf_.x_[0] = px;
-      ekf_.x_[1] = py;
-      
-    }
-    else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
-      // DONE: Initialize state.
-      float px = measurement_pack.raw_measurements_[0];
-      float py = measurement_pack.raw_measurements_[1];
-      ekf_.x_[0] = px;
-      ekf_.x_[1] = py;
-
+      float rho = measurement_pack.raw_measurements_(0);
+      float phi = measurement_pack.raw_measurements_(1);
+      float rho_dot = measurement_pack.raw_measurements_(2);
+      ekf_.x_(0) = cos(phi)*rho;
+      ekf_.x_(1) = sin(phi)*rho;
+      ekf_.x_(2) = cos(phi)*rho_dot;
+      ekf_.x_(3) = sin(phi)*rho_dot;
     }
     
-    previous_timestamp_ = measurement_pack.timestamp_; // is this code line neccessary?
+    else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
+      // DONE: Initialize state.
+      ekf_.x_(0) = measurement_pack.raw_measurements_(0);
+      ekf_.x_(1) = measurement_pack.raw_measurements_(1);
+      ekf_.x_(2) = 0;
+      ekf_.x_(3) = 0;
+    }
+    
+    previous_timestamp_ = measurement_pack.timestamp_;
     
     // done initializing, no need to predict or update
     is_initialized_ = true;
+    cout << "Initializing Done!" << endl;
     return;
   }
 
   /**
    * Prediction
-   */
-
-  /**
-   * DONE: Update the state transition matrix F according to the new elapsed time (measured in seconds).
-   * DONE: Update the process noise covariance matrix Q. Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
    */
   
   // time elapsed between the current and previous measurement
@@ -168,23 +152,19 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * Update
    */
 
-  /**
-   * DONE:
-   * - Use the sensor type to perform the update step.
-   * - Update the state and covariance matrices.
-   */
-
-  //Sensorfusion
+  // Sensorfusion. Use the sensor type to perform the update step.
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
-    // DONE: Radar updates
+    // Radar updates
+    Tools tools;
+    Hj_ = tools.CalculateJacobian(ekf_.x_);
+    ekf_.Init(ekf_.x_, ekf_.P_, ekf_.F_, Hj_, R_radar_, ekf_.Q_);
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
-
   }
   
   else {
-    // DONE: Laser updates
+    // Laser updates
+    ekf_.Init(ekf_.x_, ekf_.P_, ekf_.F_, H_laser_, R_laser_, ekf_.Q_);
     ekf_.Update(measurement_pack.raw_measurements_);
-
   }
 
   // print the output
