@@ -56,31 +56,34 @@ void KalmanFilter::Update(const VectorXd &z) {
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
   /**
-   * DONE: update the state by using Extended Kalman Filter equations
+   * Update the state by using Extended Kalman Filter equations
    */
     
-    double px = x_(0);
-    double py = x_(1);
-    double vx = x_(2);
-    double vy = x_(3);
+    float px = x_(0);
+    float py = x_(1);
+    float vx = x_(2);
+    float vy = x_(3);
 
     //calculate readings from polar to cartesian
-    double rho = sqrt((px * px) + (py * py));
-    double phi = atan2(py, px);
-    double rho_dot;
+    float rho = sqrt((px * px) + (py * py));
+    float phi = atan2(py, px);
+    float rho_dot;
 
-    // check if rho is non Zero
+    // check if rho is zero
     if (fabs(rho) < 0.0001)
     {
         rho_dot = 0.0;
     }
     else
     {
-        rho_dot = (px*vx + py * vy) / rho;
+        rho_dot = (px *vx + py * vy) / rho;
     }
 
     VectorXd z_pred(3);
-    z_pred << rho, phi, rho_dot;
+    z_pred << rho,
+              phi,
+              rho_dot;
+  
     VectorXd y = z - z_pred;
 
     /*
@@ -92,21 +95,15 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
      * HINT: when working in radians, you can add 2π or subtract 2π until the angle is within the desired range
     */
 
-    if (y(1) < -M_PI)
+    if (y(1) < -M_PI) // y(1) refers to phi
     {
-        while (y(1) < -M_PI)
-        {
-            y(1) += 2 * M_PI;
-        }
+      y(1) += 2 * M_PI;
     }
-    if (y(1) > M_PI)
+    
+    else if (y(1) > M_PI)
     {
-        while (y(1) > M_PI)
-        {
-            y(1) -= 2 * M_PI;
-        }
+      y(1) -= 2 * M_PI;
     }
-
 
     MatrixXd Ht = H_.transpose();
     MatrixXd S = H_ * P_ * Ht + R_;
@@ -119,32 +116,5 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     long x_size = x_.size();
     MatrixXd I = MatrixXd::Identity(x_size, x_size);
     P_ = (I - K * H_) * P_;
-    
-  
-    /**
-    // pre-compute a set of terms to avoid repeated calculation
-    float rho = sqrt(px*px + py*py);
-    float phi = atan2(py, px);
-    float rho_dot = (px*vx+py*vy)/rho;
-      
-    MatrixXd hx_ = MatrixXd(3, 1);
-    hx_ << rho,
-           phi,
-           rho_dot;
-  
-    VectorXd z_pred = hx_;
-    VectorXd y = z - z_pred;
-    // MatrixXd Ht = H_.transpose();
-    MatrixXd Hjt = Hj_.transpose();
-    MatrixXd S = Hj_ * P_ * Hjt + R_;
-    MatrixXd Si = S.inverse();
-    MatrixXd PHt = P_ * Hjt;
-    MatrixXd K = PHt * Si;
 
-    // new state/estimate
-    x_ = x_ + (K * y);
-    long x_size = x_.size();
-    MatrixXd I = MatrixXd::Identity(x_size, x_size);
-    P_ = (I - K * Hj_) * P_;
-    */
 }
