@@ -1,80 +1,15 @@
-# Extended Kalman Filter - Tracking Objects
+# Extended Kalman Filter - Tracking Moving Objects
 
-In this project we utilize a kalman filter to estimate the state of a moving object of interest with noisy lidar and radar measurements. The goal is to obtain RMSE (root mean square error) values that are lower than a specific tolerance. 
+In this project I implemented a Kalman filter in C++ to estimate the state of a nmoving bicycle that travels around a vehicle.
 
-This project involves a simulator which can be downloaded [here](https://github.com/udacity/self-driving-car-sim/releases)
+This project involves a simulator which can be downloaded [here](https://github.com/udacity/self-driving-car-sim/releases). The simulator provides simulated lidar and radar measurements of the bicycle. All in all, I used a Kalman filter, lidar measurements and radar measurements to track the bicycle's position and velocity:
 
-This repository includes two files that can be used to set up and install [uWebSocketIO](https://github.com/uWebSockets/uWebSockets) for either Linux or Mac systems. For windows you can use either Docker, VMware, or even [Windows 10 Bash on Ubuntu](https://www.howtogeek.com/249966/how-to-install-and-use-the-linux-bash-shell-on-windows-10/) to install uWebSocketIO.
+<p align="left">
+  <img width="364" height="243" src="readme_data/pid.gif">
+</p>
 
-Once the install for uWebSocketIO is complete, the main program can be built and run by doing the following from the project top directory.
+Lidar measurements are red circles, radar measurements are blue circles with an arrow pointing in the direction of the observed angle, and estimation markers are green triangles. The gif above shows what the simulator looks like when a C++ script is using its Kalman filter to track the object. The simulator provides the script the measured data (either lidar or radar). The script feeds back the measured estimation markers and RMSE (root mean squared error) values from its Kalman filter.
 
-1. mkdir build
-2. cd build
-3. cmake ..
-4. make
-5. ./ExtendedKF
-
-Here is the main protocol that main.cpp uses for uWebSocketIO in communicating with the simulator.
-
-INPUT: values provided by the simulator to the c++ program
-
-["sensor_measurement"] => the measurement that the simulator observed (either lidar or radar)
-
-OUTPUT: values provided by the c++ program to the simulator
-
-["estimate_x"] <= kalman filter estimated position x
-["estimate_y"] <= kalman filter estimated position y
-["rmse_x"]
-["rmse_y"]
-["rmse_vx"]
-["rmse_vy"]
-
----
-
-## Other Important Dependencies
-
-* cmake >= 3.5
-  * All OSes: [click here for installation instructions](https://cmake.org/install/)
-* make >= 4.1 (Linux, Mac), 3.81 (Windows)
-  * Linux: make is installed by default on most Linux distros
-  * Mac: [install Xcode command line tools to get make](https://developer.apple.com/xcode/features/)
-  * Windows: [Click here for installation instructions](http://gnuwin32.sourceforge.net/packages/make.htm)
-* gcc/g++ >= 5.4
-  * Linux: gcc / g++ is installed by default on most Linux distros
-  * Mac: same deal as make - [install Xcode command line tools](https://developer.apple.com/xcode/features/)
-  * Windows: recommend using [MinGW](http://www.mingw.org/)
-
-## Basic Build Instructions
-
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make` 
-   * On windows, you may need to run: `cmake .. -G "Unix Makefiles" && make`
-4. Run it: `./ExtendedKF `
-
-## Editor Settings
-
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
-
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
-
-## Code Style
-
-Sticked to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
-
-## Generating Additional Data
-
-If you'd like to generate your own radar and lidar data, see the
-[utilities repo](https://github.com/udacity/CarND-Mercedes-SF-Utilities) for
-Matlab scripts that can generate additional data.
-
-## Hints and Tips!
-
-* Students have reported rapid expansion of log files when using the term 2 simulator.  This appears to be associated with not being connected to uWebSockets.  If this does occur,  please make sure you are conneted to uWebSockets. The following workaround may also be effective at preventing large log files.
-
-    + create an empty log file
-    + remove write permissions so that the simulator can't write to log
- * Please note that the ```Eigen``` library does not initialize ```VectorXd``` or ```MatrixXd``` objects with zeros upon creation.
+Check out this video on YouTube to see a real world example of object tracking with lidar:
+[![IMAGE ALT TEXT HERE](./readme_data/Thumbnail.png)](https://youtu.be/FMNJPX_sszU)
+In this project, I only tracked one object, but the video will give you a better sense for how object tracking with lidar works
